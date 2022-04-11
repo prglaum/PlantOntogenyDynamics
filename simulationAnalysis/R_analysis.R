@@ -2,6 +2,7 @@
 # Load packages -----------------------------------------------------------
 
 library(ggplot2)
+library(pls)
 
 # Figure 2: Threshold plots -----------------------------------------------
 
@@ -60,7 +61,6 @@ plot(c(0,2),c(0,1),type = 'n', axes = F,xlab = '', ylab = '', main = 'rF')
 text(x=1.5, y = seq(0,1,l=9), labels = seq(.4,3,l=9))
 rasterImage(legend_image, 0, 0, 1,1)
 
-
 # Figure 3: Distribution of Herbivory across stages -----------------------
 
 df=subset(h1a06,a2+aF==0.8) %>%
@@ -84,3 +84,42 @@ ggplot(df, aes(x=Distribution, y=MaxEVal)) +
                      labels = c('aF=100%\na2=0%', 'aF=75%\na2=25%', 'aF=50%\na2=50%', 'aF=25%\na2=75%', 'aF=0%\na2=100%'))
 
 
+# Figure 4: Partial least squares -----------------------------------------
+
+matrix = matrix(NA,12,3)
+colnames(matrix)=c('consumption','variable','coefficient')
+counter = 1;
+consumption = c("seedling-only","adult-only","seedling-dominant","adult-dominant")
+aFs=c(0,1,0.2,1);
+a2s=c(1,0,1,0.2);
+
+for (i in c(1,2,3,4)) {
+  plsmod=plsr(MaxEVal~percCons+gam1+gam2,data=subset(h1a06,aF==aFs[i]&a2==a2s[i]))
+  ##Extract coefficients
+  coefficients=coef(plsmod)
+  ##Normalizing them
+  sum.coef = sum(sapply(coefficients, abs))
+  coefficients = coefficients * 100 / sum.coef
+  coefficients = sort(coefficients[, 1 , 1])
+  col1 = consumption[i]
+  matrix[counter,]=c(col1,"gam1",coefficients[c(2)])
+  counter=counter+1;
+  matrix[counter,]=c(col1,"gam2",coefficients[c(1)])
+  counter=counter+1;
+  matrix[counter,]=c(col1,"percCons",coefficients[c(3)])
+  counter=counter+1;
+}
+
+matrix=as.data.frame(matrix)
+matrix$coefficient=as.numeric(matrix$coefficient)
+matrix$coefficient=round(matrix$coefficient,2)
+
+##This creates the two parameter bargraphs
+ggplot(matrix, aes(x=factor(consumption), y=coefficient,fill=factor(variable))) + #ylim(-.007,.011)  +
+  geom_bar(stat="identity", width=0.8,
+           position=position_dodge(0.8)) +
+  theme_bw() + theme(text = element_text(size=20))+
+  labs(x = "Coefficients by consumption", y = "Coefficients") +
+  theme(legend.direction = "horizontal") +
+  theme(legend.text = element_text(colour="black", size = 11)) + 
+  theme(legend.position="bottom") 
