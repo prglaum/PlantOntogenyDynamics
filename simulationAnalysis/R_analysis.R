@@ -63,7 +63,6 @@ rasterImage(legend_image, 0, 0, 1,1)
 
 # Figure 3: Distribution of Herbivory across stages -----------------------
 
-#
 df=subset(h1a06,a2+aF==0.8) %>%
   summarize(MaxEVal,a2=a2,aF=aF,Distribution=0,g1=g1,g2=g2,rF=rF) #make sure summarize is working ok without group_by
 
