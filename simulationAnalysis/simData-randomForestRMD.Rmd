@@ -1,0 +1,246 @@
+---
+title: "Random Forest Examples on Simulation Data"
+author: "Paul Glaum"
+date: '2022-04-18'
+output: html_document
+runtime: shiny
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Random Forest Example
+
+This is an example process of loading in simulation data and the required packages for analysis, training and validating a RF model, and analyzing the output/feature interactions. 
+For the sake of expendiency, we only focus on a herbivory subset of the full simulation data set. Given the size of our dataset, running the RF on the full simulation data set does have a prolonged running time. The specific herbivory subset is chosen by the user using the sliders below. 
+
+## Prepare packages & data
+Load packages:
+```{r load packages, message=FALSE}
+#library(readxl)
+#library(readr)
+library(dplyr)
+library(tidymv)
+require(ggplot2)
+
+##These packages need to be loaded for analysis:
+library(randomForest) #for random forests
+require(pROC) #for estimating AUC 
+library(Metrics) #for evaluating rsme, loading this messes up the auc function for
+			#pROC...
+library(pls) #for partial least squares regression
+
+library(iml) #Interpret feature importance & interactions
+library("future")
+library("future.callr")
+```
+
+Load the full data set:
+```{r load & setup data, context = 'data', message=FALSE}
+##############################
+#####alpha .1 h2=1, hF=1#####
+#############################
+#h1a1 <- read.csv("C:/Users/prglaum/Documents/Stage-Structure/SimonEtAl2021/Manuscript/Public Code/NewAgain-Check-FiveParamSweep-rF1.-alphaF0.1-hF1.-h21..csv",sep=",",header=T, na.strings=c("NaN","#NAME?","-Inf","","NA"))
+
+h1a1 <- read.csv('C:/Users/prglaum/Documents/Stage-Structure/SimonEtAl2021/Manuscript/Public Code/h1a1.csv',sep=",",header=T, na.strings=c("NaN","#NAME?","-Inf","","NA"))
+
+```
+
+For the sake of expendiency in describing how to run random forests, we only focus on a herbivory subset of the full simulation data set. Given the size of our dataset, creating a RF on the full simulation data set does have a prolonged running time. 
+
+Please see the sldiers below to choose the herbivory allocation you wish to analyze. 
+With your chosen herbivory subset, this application will run train, validate, and analyze a Random Forest using the remaining simulation model parameters (g12, g2F, & rF) as the Random Forest predictors/features. In this instance, our random forest will be completing categorization task and using the features to predict simulation stability or instability in our loaded data set. 
+
+Note, our data frames are rather large. So making the random forest and PDPs can take a few moments. 
+ 
+### Assign the chosen herbivory rates. 
+```{r assign herbivory, echo=FALSE}
+sliderInput("aF", label = "Choose aF rate",min = 0.2, max = 2, value = 1, step = 0.2)
+sliderInput("a2", label = "Choose a2 rate",min = 0.0, max = 2, value = 1, step = 0.2)
+
+```
+
+Creating and testing a machine learning model, like our random forest, involves taking a data set and splitting into "training" and "validation" or ""testing" subsets. The training subset is used to train the random forest as it learns to associate the chosen features with particular outcomes. The validation subset is then used to test the performance of the Random Forest on data that it has not seen or been trained on. 
+All this happens in the background of this document. You can look at the source code of the rmd file used to run this document or at the regular .R script that goes into more detail in the supplementary material.
+```{r, echo=FALSE}
+#renderPrint({
+#  input$aF
+#})
+
+#renderPrint({
+#  input[['a2']]
+#})
+```
+
+```{r, context = 'server',echo=FALSE}
+set.seed(42)
+temp_data <- reactive({
+    temp=subset(h1a1,aF==input[['aF']]&a2==input[['a2']])
+    temp2=data.frame(temp$StableB,temp$MaxEVal,temp$rF,temp$g1,temp$g2);
+    colnames(temp2)=c('Stable','EV','rF','g1','g2');
+    temp2$Stable=as.factor(temp2$Stable); temp_data=temp2;
+    return(temp_data)
+})
+
+indexes <- reactive({
+    data_set_size <- floor(nrow(temp_data())/1.5)
+    as.numeric(sample(1:nrow(temp_data()), size = data_set_size))
+})
+
+
+##USing our random indices to create the training and validation (testing) subsets
+temp_training <- reactive({
+    inds=as.numeric(indexes())
+    temp_data()[inds,]
+})
+
+temp_validation <- reactive({
+    inds=as.numeric(indexes())
+    temp_data()[-inds,]
+})
+
+##This is a simple scatter plot showing relationships between a parameter and eigenvalues. 
+output[['mov_plot']] <- renderPlot({
+  ggplot(data=temp_training(),aes(x=g1,y=EV)) + geom_point() + xlab(bquote(g[12])) + ylab('Max eigenvalue') + theme(text = element_text(size=14))
+})
+
+```
+This is a simple scatter plot showing relationships between a parameter and eigenvalues.
+```{r, g1Plot, echo=FALSE}
+plotOutput('mov_plot')
+```
+
+```{r, serverSide, context = 'server',echo=FALSE,message=FALSE}
+##This is the "server" of the "application/document." It has all the fundamental random forest code in it but had to be written in reactive code. So it looks a bit more cluttered than normal. 
+rfCat<-reactive({
+  randomForest(as.factor(Stable) ~ rF+g1+g2, data=temp_training(), ntree=500,mtry=2,type= "regression",keep.forest=TRUE,importance=TRUE)
+  });
+
+##For displaying the performance of the trained model
+output[['trainedResults']]=renderPrint({
+  rfCat()
+})
+
+##Check the importance of each feature/predictor in our trained model
+output[['varIMP']]=renderPlot({
+  varImpPlot(rfCat(),main="", pch=20,lwd=10.8)
+})
+
+##Use trained model to predict data in validation data set
+catPred=reactive({
+  predict(rfCat(),newdata=temp_validation()[,3:5],type=c("response"))
+})
+##For printing confusion matrix
+output[['predTable']]=renderTable({
+  table(observed=temp_validation()[,1],predicted=catPred())
+})
+
+##Making ROC curve for RF prediction
+g <- reactive({
+  roc(temp_validation()$Stable ~ as.numeric(as.character(catPred() )))
+})
+##For plotting ROC curve for model performance on validation set
+output[['roc']]=renderPlot({
+  plot(g(),main=paste("AUC=",round(g()$auc,3)))
+})
+
+##making predictor for the pdp using iml packge
+imlPredictor=reactive({
+  Predictor$new(rfCat(), data = temp_validation()[,3:5], y = temp_validation()[,1],class = 2);
+})
+
+##Making the 3 single feature graphs
+pdp.g1=reactive({
+  FeatureEffect$new(imlPredictor(), feature = c("g1"),method="pdp");
+  #PDPresults$results$g1
+})
+
+##Making the 3 single feature graphs
+pdp.g2=reactive({
+  FeatureEffect$new(imlPredictor(), feature = c("g2"),method="pdp")
+})
+
+##Making the 3 single feature graphs
+pdp.rF=reactive({
+  FeatureEffect$new(imlPredictor(), feature = c("rF"),method="pdp")
+})
+
+##Making the 3 single feature graphs
+output[['g1PDP']]=renderPlot({
+ #pdp.g1()$plot()
+  ggplot() + geom_line(aes(x=pdp.g1()$results$g1,y=pdp.g1()$results$.value),lwd=1.3) + xlab(bquote(g[12])) + ylab("Est. Prob of Stability") + theme_bw() +theme(text = element_text(size=14))
+})
+
+##Making the 3 single feature graphs
+output[['g2PDP']]=renderPlot({
+ ggplot() + geom_line(aes(x=pdp.g2()$results$g2,y=pdp.g2()$results$.value),lwd=1.3) + xlab(bquote(g["2F"])) + ylab("Est. Prob of Stability") + theme_bw() +theme(text = element_text(size=14))
+})
+
+##Making the 3 single feature graphs
+output[['rFPDP']]=renderPlot({
+ ggplot() + geom_line(aes(x=pdp.rF()$results$rF,y=pdp.rF()$results$.value),lwd=1.3) + xlab(bquote(r["F"])) + ylab("Est. Prob of Stability") + theme_bw() +theme(text = element_text(size=14))
+})
+
+##Two feature pdp with g1 & g2
+pdp2F=reactive({
+  FeatureEffect$new(imlPredictor(), feature = c("g1","g2"),method="pdp")
+})
+
+##Two feature PDP with g1 & g2
+output[['g1g2PDP']]=renderPlot({
+pdp2F()$plot()+theme_bw()+
+  theme(text = element_text(size=14)) +
+  xlab(bquote('Base Germination Rate '~(g[12])~'') ) +
+  ylab(bquote('Base Seedling Maturation Rate '~(g["2F"])~'') ) +
+  scale_fill_gradient(name=bquote('Est.\nstability\nprobability '))
+})
+
+```
+
+## Look at results of trained model 
+Check the performance of the Random Forest on our training data set. First, we'll check out of box error rate and confusion matrix:
+```{r, echo=FALSE,message=FALSE}
+#verbatimTextOutput('id')
+verbatimTextOutput('trainedResults')
+```
+We are aiming for a low error rate overall and low class error rates for each category. 
+If we have good performance we can then look at the feature importance from the trained Random Forest model:
+```{r, echo=FALSE,message=FALSE}
+plotOutput('varIMP')
+```
+
+## Accuracy of model on validation data set
+Checking our Random Forest's prediction versus the data seen in the validation data set.
+First, we create a confusion matrix to directly compare predictions to simulation data in the validation data set as a table. 
+
+*Note, the Random Forest needs multiple categories to run. So an entirely seedling focused consumer (aF=0, a2>0) will not be able to run. 
+```{r,echo=FALSE, fig.show='hold', out.width='50%'}
+fluidRow(
+  column(1),
+  column(5,
+tableOutput('predTable')
+  ),
+  column(6,
+plotOutput('roc',width=250,height=250)
+  )
+)
+```
+
+## Feature Effects
+Use Partial Dependence Plots (PDP) to look at the marginal effect of single features (our model parameters, g12,g2F,&rF) on the predicted variable (Estimated Stability Prob.):
+```{r, echo=FALSE, message=FALSE}
+#plotOutput('g1PDP',width=250,height=250)
+fluidRow(
+  column(4,plotOutput('g1PDP',width=250,height=250) ),
+  column(4,plotOutput('g2PDP',width=250,height=250) ),
+  column(4,plotOutput('rFPDP',width=250,height=250) )
+)
+```
+We can also use 2D PDPs to create a visual investigation of the interactions between features:
+```{r, echo=FALSE,message=FALSE}
+plotOutput('g1g2PDP')
+```
+
+
