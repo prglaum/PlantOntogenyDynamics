@@ -61,29 +61,6 @@ plot(c(0,2),c(0,1),type = 'n', axes = F,xlab = '', ylab = '', main = 'rF')
 text(x=1.5, y = seq(0,1,l=9), labels = seq(.4,3,l=9))
 rasterImage(legend_image, 0, 0, 1,1)
 
-# Figure 3: Distribution of Herbivory across stages -----------------------
-
-df=subset(h1a06,a2+aF==0.8) %>%
-  summarize(MaxEVal,a2=a2,aF=aF,Distribution=0,g1=g1,g2=g2,rF=rF) #make sure summarize is working ok without group_by
-
-df$Distribution[df$a2==0&df$aF==0.8] <- "aF=100%"
-df$Distribution[df$a2==0.2&df$aF==0.6] <- "aF=75%"
-df$Distribution[df$a2==0.4&df$aF==0.4] <- "aF=50%"
-df$Distribution[df$a2==0.6&df$aF==0.2] <- "aF=25%"
-df$Distribution[df$a2==0.8&df$aF==0] <- "aF=0%"
-
-df$Distribution <- as.factor(df$Distribution)
-df$Distribution <- factor(df$Distribution , levels=c("aF=100%", "aF=75%", "aF=50%", "aF=25%", "aF=0%"))
-
-#boxplot
-ggplot(df, aes(x=Distribution, y=MaxEVal)) + 
-  geom_boxplot(position=position_dodge(1)) +
-  geom_hline(yintercept=0) +
-  scale_x_discrete(name = 'Distribution of herbivory across stages', 
-                     breaks = c('aF=100%', 'aF=75%', 'aF=50%', 'aF=25%', 'aF=0%'), 
-                     labels = c('aF=100%\na2=0%', 'aF=75%\na2=25%', 'aF=50%\na2=50%', 'aF=25%\na2=75%', 'aF=0%\na2=100%'))
-
-
 # Figure 4: Partial least squares -----------------------------------------
 
 matrix = matrix(NA,12,3)
