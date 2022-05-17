@@ -32,6 +32,21 @@ h1a06$g2=round(h1a06$g2,2)
 h1a06$a2=round(h1a06$a2,1)
 h1a06$aF=round(h1a06$aF,1)
 
+#load special data for threshold plots
+setwd("~/path to where you saved the folder/XXX")
+h1a06_threshold <- list.files(path = "~/path to where you saved the folder/XXX", pattern = "*.csv", full.names = TRUE) %>% 
+  map_df(~read_csv(.x) %>% mutate(across(.fns = as.character))) %>%
+  type_convert()
+
+##need to run these too
+##Mathematica's precision, some values came with a slight error rate < e^-10.
+##Run this to remove the unnecessary decimal. 
+h1a06_threshold$rF=round(h1a06_threshold$rF,1)
+h1a06_threshold$g1=round(h1a06_threshold$g1,2)
+h1a06_threshold$g2=round(h1a06_threshold$g2,2)
+h1a06_threshold$a2=round(h1a06_threshold$a2,1)
+h1a06_threshold$aF=round(h1a06_threshold$aF,1)
+
 #The following equations form the output from our model's subfunctions
 #delta, gamma12(gam1), gamma2F(gam2), thetaF and thetaS2 in order to 
 #make percCons

@@ -6,11 +6,11 @@ library(pls)
 
 # Figure 2: Threshold plots -----------------------------------------------
 
-g1s=sort(unique(h1a06$g1)); rFs=sort(unique(h1a06$rF)); g2s=sort(unique(h1a06$g2));
+g1s=sort(unique(h1a06_threshold$g1)); rFs=sort(unique(h1a06_threshold$rF)); g2s=sort(unique(h1a06_threshold$g2));
 signChange=data.frame(sort(rep(rFs,length(g1s))),rep(g1s,length(rFs)),rep(NA,length(g1s)*length(rFs)),rep(NA,length(g1s)*length(rFs)))
 colnames(signChange)=c('rF','g1','g2','direction')
 for (r in 1:length(rFs) ) {
-  df=subset(h1a06,rF==rFs[r]&a2==0&aF==1) %>% 
+  df=subset(h1a06_threshold,rF==rFs[r]&a2==0&aF==1) %>% 
     group_by(g1,g2) %>%
     summarize(avg_ev = mean(MaxEVal,na.rm=TRUE) )
   
@@ -119,7 +119,9 @@ ggplot(matrix, aes(x=factor(consumption), y=coefficient,fill=factor(variable))) 
   geom_bar(stat="identity", width=0.8,
            position=position_dodge(0.8)) +
   theme_bw() + theme(text = element_text(size=20))+
-  labs(x = "Coefficients by consumption", y = "Coefficients") +
+  labs(x = "Coefficients by consumption", y = "Coefficients", fill="Parameters") +
+  scale_fill_manual(labels = expression(gamma[1],gamma[2],PercCons), values = c("#F8766D", "#00BA38","#619CFF")) +
   theme(legend.direction = "horizontal") +
   theme(legend.text = element_text(colour="black", size = 11)) + 
-  theme(legend.position="bottom") 
+  theme(legend.position="bottom")
+
