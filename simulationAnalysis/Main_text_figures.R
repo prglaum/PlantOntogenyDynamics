@@ -2,7 +2,42 @@
 # Load packages -----------------------------------------------------------
 
 library(ggplot2)
+library(ggrepel)
 library(pls)
+
+# Figure 1: Figures d through i -----------------------------------------------
+
+## Figure 1d: Variable Importance vs H-statistic (interactivity) 
+##data.frames. Reruning the full dataset analysis takes very long. 
+##So we have provided the RF outputs and H-statistic info here. 
+params=c('rF','g12','g2F','a2','aF','rF','g12','g2F','aF')
+AccDec=c(0.06187916,0.25017296,0.06086832,0.19885779,0.21016671,0.04421194,0.16133084,0.16096122,0.12333047);
+GiniDec=c(14876.46,71219.25,15085.70,61129.33,61425.42,1323.030,3455.225,3548.774,3630.182);
+Hstat=c(0.2589770,0.5268021,0.2731556,0.4170823,0.3609375,0.4281434,0.7663815,0.6863262,0.6024723);
+Version=c("5","5","5","5","5","4","4","4","4")
+
+DF=data.frame(params,Version,AccDec,GiniDec,Hstat); DF$params=as.factor(DF$params);
+labelZ=c(bquote(r[F]),bquote(g[12]),bquote(g["2F"]),bquote(a[2]),bquote(a[F]),bquote(r[F]),bquote(g[12]),bquote(g["2F"]),bquote(a[F]))
+
+#plot figure using ggplot
+g<-ggplot(DF, aes(x=AccDec,y=Hstat,label=params,color=Version))+ 
+   theme_bw() + coord_cartesian(ylim = c(0.15, .85)) + 
+   geom_smooth(aes(color=Version),method='lm', formula= y~x,se=TRUE,alpha=0.2,) +
+   geom_point(aes(color=Version),size=2) +
+   xlab("Var. Imp.(Mean Acc. Decrease)")+
+   ylab("H statistic") +
+   #ggtitle("Information Value Summary") + 
+   theme(legend.position = c(0.7, 0.10)) + #c(0.68, 0.2)
+   theme(text = element_text(size=16)) + theme(legend.title=element_blank()) +
+   scale_color_discrete(labels=c(expression(paste(a[2], "=0.0, ", a[F], ">0.0")) ,"all 5 parameters")) + guides(color = guide_legend(nrow = 1)) +
+   geom_label_repel(
+			aes(label = labelZ),
+			parse=TRUE,
+                  box.padding   = 0.35, 
+                  point.padding = 0.5,
+                  segment.color = 'grey50',show.legend = F)
+
+#ggsave("Fig1d.png",g,width = 6.5,height = 3.5,dpi = 300)
 
 # Figure 2: Threshold plots -----------------------------------------------
 
