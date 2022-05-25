@@ -1,3 +1,11 @@
+#####################
+##MAIN TEXT FIGURES##
+#####################
+##Use simDataLoader to load chosen herbivory subset. We use hF=h2=1 and 
+##alpF=alp1=alp2=0.06 here. The file is labeled h1a06 below.
+##Random Forest specific figures are detailed & described in 
+##Supplementary Info XXX
+
 
 # Load packages -----------------------------------------------------------
 
@@ -5,6 +13,7 @@ library(ggplot2)
 library(ggrepel)
 library(pls)
 
+############# ----------------------------------------------- #############
 # Figure 1: Figures d through i -----------------------------------------------
 
 ## Figure 1d: Variable Importance vs H-statistic (interactivity) 
@@ -39,8 +48,55 @@ g<-ggplot(DF, aes(x=AccDec,y=Hstat,label=params,color=Version))+
 
 #ggsave("Fig1d.png",g,width = 6.5,height = 3.5,dpi = 300)
 
-# Figure 2: Threshold plots -----------------------------------------------
+## Figures 1e - 1i use the all_alp.1_VIvsH_2.csv data set. 
+## load the data set. 
+VIvsH=read.csv(file = "~path to file/all_alp.1_VIvsH_2.csv")
+## Figure 1e & 1f:...
 
+##Prep...
+VIvsHboxplot=data.frame(c(rep('rF',length(VIvsH$rFm)),rep('g2',length(VIvsH$g2m)),rep('g1',length(VIvsH$g1m)) ),
+c(VIvsH$rFm,VIvsH$g2m,VIvsH$g1m),
+c(VIvsH$rFh,VIvsH$g2h,VIvsH$g1h), 
+c(VIvsH$alp,VIvsH$alp,VIvsH$alp),c(VIvsH$h2,VIvsH$h2,VIvsH$h2),c(VIvsH$hF,VIvsH$hF,VIvsH$hF),
+c(VIvsH$a2,VIvsH$a2,VIvsH$a2),c(VIvsH$aF,VIvsH$aF,VIvsH$aF))
+colnames(VIvsHboxplot)=c("params","VI","H","alp","h2","hF","a2","aF")
+
+##Figure 1e: Plot...
+ggplot(data=VIvsHboxplot,aes(params,VI)) + theme_bw() + theme(axis.text.x = element_text(size = 12)) +
+  xlab('Parameters') + ylab('Variable Imp.') +
+  geom_boxplot(fill='lightblue',outlier.alpha = 0.4) +
+  scale_x_discrete(labels=c(bquote(''~g["12"]~''),bquote(''~g["2F"]~''),bquote(''~r["F"]~'')) )
+##Figure 1f: Plot...
+ggplot(data=VIvsHboxplot,aes(params,H)) + theme_bw() + theme(axis.text.x = element_text(size = 12)) +
+  xlab('Parameters') + ylab('H Statistic') +
+  geom_boxplot(fill='lightblue',outlier.alpha = 0.4) +
+  scale_x_discrete(labels=c(bquote(''~g["12"]~''),bquote(''~g["2F"]~''),bquote(''~r["F"]~'')) )
+
+## Figure 1g-1i: ...
+## Fig 1g:
+ggplot(subset(VIvsH,h2==0.5&hF==0.5), aes(as.factor(a2), as.factor(aF), fill= rFm)) + 
+  geom_tile() + theme_bw() + coord_fixed() +
+  xlab(bquote('Attack Rate on S2 '~(a[2])~'') ) +
+  ylab(bquote('Attack Rate on F '~(a[F])~'') ) +
+  scale_fill_gradient(name=bquote('Var.\nImp.'~(r["F"])~'') )
+## Fig 1h:
+ggplot(subset(VIvsH,h2==0.5&hF==0.5), aes(as.factor(a2), as.factor(aF), fill= g1m)) + 
+  geom_tile() + theme_bw() + coord_fixed() +
+  xlab(bquote('Attack Rate on S2 '~(a[2])~'') ) +
+  ylab(bquote('Attack Rate on F '~(a[F])~'') ) +
+  scale_fill_gradient(name=bquote('Var.\nImp.'~(g["12"])~'') ) 
+## Fig 1i:
+ggplot(subset(VIvsH,h2==0.5&hF==0.5), aes(as.factor(a2), as.factor(aF), fill= g2m)) + 
+  geom_tile() + theme_bw() + coord_fixed() +
+  xlab(bquote('Attack Rate on S2 '~(a[2])~'') ) +
+  ylab(bquote('Attack Rate on F '~(a[F])~'') ) +
+  scale_fill_gradient(name=bquote('Var.\nImp.'~(g["2F"])~'') )
+ 
+
+
+############# ----------------------------------------------- #############
+# Figure 2: Threshold plots -----------------------------------------------
+##Note, see random forest code for code for PD plots
 g1s=sort(unique(h1a06_threshold$g1)); rFs=sort(unique(h1a06_threshold$rF)); g2s=sort(unique(h1a06_threshold$g2));
 signChange=data.frame(sort(rep(rFs,length(g1s))),rep(g1s,length(rFs)),rep(NA,length(g1s)*length(rFs)),rep(NA,length(g1s)*length(rFs)))
 colnames(signChange)=c('rF','g1','g2','direction')
@@ -96,8 +152,12 @@ plot(c(0,2),c(0,1),type = 'n', axes = F,xlab = '', ylab = '', main = 'rF')
 text(x=1.5, y = seq(0,1,l=9), labels = seq(.4,3,l=9))
 rasterImage(legend_image, 0, 0, 1,1)
 
-# Figure 4: Partial least squares -----------------------------------------
 
+############# ----------------------------------------------- #############
+# Figure 3: Partial least squares -----------------------------------------
+# Describe what these coefficients are...
+
+##Figure 3a: 
 matrix = matrix(NA,12,3)
 colnames(matrix)=c('consumption','variable','coefficient')
 counter = 1;
@@ -136,4 +196,37 @@ ggplot(matrix, aes(x=factor(consumption), y=coefficient,fill=factor(variable))) 
   theme(legend.direction = "horizontal") +
   theme(legend.text = element_text(colour="black", size = 11)) + 
   theme(legend.position="bottom")
+
+##Figures 3b-3d
+## Prep...
+As=seq(0.0,2,.2); As=round(As,1);
+compDF=expand.grid(a2=As, aF=As);
+percCM=matrix(0,length(As),length(As)); gam1M=matrix(0,length(As),length(As)); gam2M=matrix(0,length(As),length(As));
+for(i in 1:length(As) ) {
+	for(j in 1:length(As) ) {
+		temp=subset(h1a06,aF==As[i]&a2==As[j])
+		temp=data.frame(temp$StableB,temp$MaxEVal,temp$rF,temp$g1,temp$g2,temp$percCons,temp$gam1,temp$gam2);
+		colnames(temp)=c('Stable','EV','rF','g1','g2','percCons','gam1','gam2'); temp$Stable=as.factor(temp$Stable);
+		
+		tempPLSmod=plsr(EV~percCons+gam1+gam2,data=temp)
+		coefficients=coef(tempPLSmod)
+		sum.coef = sum(sapply(coefficients, abs))
+		coefficients = coefficients * 100 / sum.coef
+		coefficients = sort(coefficients[, 1 , 1])
+
+		percCM[i,j]=coefficients[['percCons']]
+		gam1M[i,j]=coefficients[['gam1']]
+		gam2M[i,j]=coefficients[['gam2']]
+	}
+}
+
+compCoeff=expand.grid(a2=As, aF=As);
+compCoeff$percCcoeff=c(percCM); compCoeff$gam1coeff=c(gam1M); compCoeff$gam2coeff=c(gam2M);
+compCoeff$percCcoeff[1]=NA; compCoeff$gam1coeff[1]=NA; compCoeff$gam2coeff[1]=NA;
+
+## Plot...
+ggplot(compCoeff, aes(as.factor(a2), as.factor(aF), fill= gam2coeff)) + 
+  geom_tile() + theme_bw() + coord_fixed() +
+  ylab(bquote('Attack Rate on S2 '~(a[2])~'') ) +
+  xlab(bquote('Attack Rate on F '~(a[F])~'') )
 
