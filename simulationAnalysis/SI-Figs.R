@@ -9,7 +9,8 @@ library(ggplot2)
 library(pROC) #for estimating AUC 
 library(pls) #for partial least squares regression
 
-##Use simDataLoader to load chosen herbivory subset. We use h1a06 here. 
+##Use simDataLoader to load chosen herbivory subset. We use hF=h2=1 and 
+##alpF=alp1=alp2=0.06 here. The file is labeled h1a06 below.  
 ##Code and figures describing COMPADRE analysis are 
 ##available in the COMPADRE section 
 
