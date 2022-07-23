@@ -1,1 +1,4 @@
-
+## File Descriptions:
+### Simulation Analysis Folder:
+Folder containing a subset of the simulation data. This subset functions as the publicly accessible data necessary to run the random forest example application available at https://prglaum.shinyapps.io/simData-randomForestRMD/. It does not need to be used for any other analysis, but could be downloaded and analyzed locally should the reader be interested. 
+* h1a1Small.csv – A csv file containing the simulation data subset where the handling times h<sub>F</sub> = h<sub>2</sub> = 1 and density dependence effects (α<sub>g1</sub> = α<sub>g2</sub> = α<sub>F</sub> = 0.1). Simulation data consists of all examined model parameters as well as the maximum eigenvalues and categorical indication of stability or instability from the resultant simulation. 
