@@ -35,5 +35,12 @@ Model code (Mathematica) and analysis scripts (R, RMarkdown, RShiny) used to run
   * Open SimDataLoader.R, install/load all necessary packages towards the beginning of the script. 
   * Choose which specific data subset you would like to analyze and run that code chunk. Make sure it is locally available. The script will stich the individual csv    files into a single usable data frame in R.
   * Finally, make sure to run the lines which create the ecological factors used in our analysis.
+* randomForestCode.html – Static HTML document which can be opened in any browser. This document lays out the process of analyzing simulation data with the randomForest R package for both categorical tasks (e.g., stable or unstable) and regression tasks (e.g., the value of the maximum eigenvalue). Additionally, we also include code used to analyze feature effects via the iml R package. 
+* Main_text_figures.R – Base R script containing code used to create all main text figures except for iml based figures. Code for iml based figures is available in randomForestCode.html. 
+* SI-figs.R – Base R script containing code used to create supplementary text figures. 
+* simData-randomForestRMD.Rmd – This is the code used to create the random forest demonstration app (https://prglaum.shinyapps.io/simData-randomForestRMD/) using a combination of RMarkdown and RShiny. 
 
+## Simulation Analysis Folder:
+Folder containing a subset of the simulation data. This subset functions as the publicly accessible data necessary to run the random forest example application available at https://prglaum.shinyapps.io/simData-randomForestRMD/. It does not need to be used for any other analysis, but could be downloaded and analyzed locally should the reader be interested. 
+* h1a1Small.csv – A csv file containing the simulation data subset where the handling times h~F = h~2 = 1 and density dependence effects (α~g1 = α~g2 = α~F = 0.1). Simulation data consists of all examined model parameters as well as the maximum eigenvalues and categorical indication of stability or instability from the resultant simulation. 
 
