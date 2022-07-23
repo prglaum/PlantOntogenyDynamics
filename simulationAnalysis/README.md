@@ -1,5 +1,5 @@
 ## File Descriptions:
-## Simulation Analysis Folder:
+### Simulation Analysis Folder:
 Model code (Mathematica) and analysis scripts (R, RMarkdown, RShiny) used to run the model and analyze its behavior respectively. 
 * Model-SI.cdf – Plant-herbivore model code written as a Mathematica cdf file. Simply download Wolfram’s free cdf player (see above) and open the file. The model is ready for immediate user input via parameter settings set by the user. 
 * SimDataLoader.R: This script loads simulation data from model runs across our studied parameter space (see main text). All permutations of simulation data files are too large to load all at once. Therefore, simulation data is stored in subsets based on specific combinations of our sensitivity parameters, handling time h and density dependence, alpha (see Table 1).
