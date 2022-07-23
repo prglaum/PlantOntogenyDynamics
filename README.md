@@ -27,7 +27,7 @@ Scripts used to download and analyze the plant demographic matrices used to info
 * CompadreAnalysisRMD.html – R Markdown created HTML file can be opened in any internet browser. All the code from the base R script (compadreAnalysis.R) is pre-run and available to examine as a standalone HTML document without needing to open R directly. Also includes interactive map of plant data locations. 
 * CompadreAnalysisRMD.Rmd – The R Markdown code used to create the CompadreAnalysisRMD.html file. This does not need to be run to complete any of the analyses in the manuscript but is provided to anyone interested in the creation of the HTML files.
 
-## Simulation Analysis Folder:
+### Simulation Analysis Folder:
 Model code (Mathematica) and analysis scripts (R, RMarkdown, RShiny) used to run the model and analyze its behavior respectively. 
 * Model-SI.cdf – Plant-herbivore model code written as a Mathematica cdf file. Simply download Wolfram’s free cdf player (see above) and open the file. The model is ready for immediate user input via parameter settings set by the user. 
 * SimDataLoader.R: This script loads simulation data from model runs across our studied parameter space (see main text). All permutations of simulation data files are too large to load all at once. Therefore, simulation data is stored in subsets based on specific combinations of our sensitivity parameters, handling time h and density dependence, alpha (see Table 1).
@@ -40,7 +40,7 @@ Model code (Mathematica) and analysis scripts (R, RMarkdown, RShiny) used to run
 * SI-figs.R – Base R script containing code used to create supplementary text figures. 
 * simData-randomForestRMD.Rmd – This is the code used to create the random forest demonstration app (https://prglaum.shinyapps.io/simData-randomForestRMD/) using a combination of RMarkdown and RShiny. 
 
-## Simulation Analysis Folder:
+### Simulation Analysis Folder:
 Folder containing a subset of the simulation data. This subset functions as the publicly accessible data necessary to run the random forest example application available at https://prglaum.shinyapps.io/simData-randomForestRMD/. It does not need to be used for any other analysis, but could be downloaded and analyzed locally should the reader be interested. 
 * h1a1Small.csv – A csv file containing the simulation data subset where the handling times h<sub>F</sub> = h<sub>2</sub> = 1 and density dependence effects (α<sub>g1</sub> = α<sub>g2</sub> = α<sub>F</sub> = 0.1). Simulation data consists of all examined model parameters as well as the maximum eigenvalues and categorical indication of stability or instability from the resultant simulation. 
 
