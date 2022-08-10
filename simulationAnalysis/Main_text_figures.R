@@ -166,7 +166,7 @@ aFs=c(0,1,0.2,1);
 a2s=c(1,0,1,0.2);
 
 for (i in c(1,2,3,4)) {
-  plsmod=plsr(MaxEVal~percCons+gam1+gam2,data=subset(h1a06,aF==aFs[i]&a2==a2s[i]))
+  plsmod=plsr(MaxEVal~LDratio+gam1+gam2,data=subset(h1a06,aF==aFs[i]&a2==a2s[i]))
   ##Extract coefficients
   coefficients=coef(plsmod)
   ##Normalizing them
@@ -178,7 +178,7 @@ for (i in c(1,2,3,4)) {
   counter=counter+1;
   matrix[counter,]=c(col1,"gam2",coefficients[c(1)])
   counter=counter+1;
-  matrix[counter,]=c(col1,"percCons",coefficients[c(3)])
+  matrix[counter,]=c(col1,"LDratio",coefficients[c(3)])
   counter=counter+1;
 }
 
@@ -192,7 +192,7 @@ ggplot(matrix, aes(x=factor(consumption), y=coefficient,fill=factor(variable))) 
            position=position_dodge(0.8)) +
   theme_bw() + theme(text = element_text(size=20))+
   labs(x = "Coefficients by consumption", y = "Coefficients", fill="Parameters") +
-  scale_fill_manual(labels = expression(gamma[1],gamma[2],PercCons), values = c("#F8766D", "#00BA38","#619CFF")) +
+  scale_fill_manual(labels = expression(gamma[12],gamma[2F],PercCons), values = c("#F8766D", "#00BA38","#619CFF")) +
   theme(legend.direction = "horizontal") +
   theme(legend.text = element_text(colour="black", size = 11)) + 
   theme(legend.position="bottom")
@@ -205,16 +205,16 @@ percCM=matrix(0,length(As),length(As)); gam1M=matrix(0,length(As),length(As)); g
 for(i in 1:length(As) ) {
 	for(j in 1:length(As) ) {
 		temp=subset(h1a06,aF==As[i]&a2==As[j])
-		temp=data.frame(temp$StableB,temp$MaxEVal,temp$rF,temp$g1,temp$g2,temp$percCons,temp$gam1,temp$gam2);
-		colnames(temp)=c('Stable','EV','rF','g1','g2','percCons','gam1','gam2'); temp$Stable=as.factor(temp$Stable);
+		temp=data.frame(temp$StableB,temp$MaxEVal,temp$rF,temp$g1,temp$g2,temp$LDratio,temp$gam1,temp$gam2);
+		colnames(temp)=c('Stable','EV','rF','g1','g2','LDratio','gam1','gam2'); temp$Stable=as.factor(temp$Stable);
 		
-		tempPLSmod=plsr(EV~percCons+gam1+gam2,data=temp)
+		tempPLSmod=plsr(EV~LDratio+gam1+gam2,data=temp)
 		coefficients=coef(tempPLSmod)
 		sum.coef = sum(sapply(coefficients, abs))
 		coefficients = coefficients * 100 / sum.coef
 		coefficients = sort(coefficients[, 1 , 1])
 
-		percCM[i,j]=coefficients[['percCons']]
+		percCM[i,j]=coefficients[['LDratio']]
 		gam1M[i,j]=coefficients[['gam1']]
 		gam2M[i,j]=coefficients[['gam2']]
 	}
