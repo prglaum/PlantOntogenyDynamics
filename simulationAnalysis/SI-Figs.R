@@ -17,11 +17,8 @@ library(pls) #for partial least squares regression
 ###############
 ###alpha .06, both h=1###
 ##############
-#loading the data, it needs to be in one folder with nothing else in it
-setwd("YOUR DIRECTORY/NEWESTFiveParamSweep-alp0.06-hF1-h21/")
-file.list <- list.files(pattern='*.csv')
-df.list <- lapply(file.list, read_csv)
-h1a06 <- bind_rows(df.list, .id = "id")
+#load the corresponding csv file
+h1a06 <- read.csv("~/path to where you saved the file/FiveParamSweep-alp0.06-hF1-h21.csv",sep=",",header=T, na.strings=c("NaN","#NAME?","-Inf",""))
 ##need to run these too
 h1a06$rF=round(h1a06$rF,1)
 h1a06$g1=round(h1a06$g1,2)
@@ -37,7 +34,7 @@ h1a06$thetaF= ((h1a06$Heqm*.6*h1a06$aF*h1a06$Feqm)/(1+h1a06$aF*h1a06$hF*h1a06$Fe
 h1a06$thetaS2= ((h1a06$Heqm*.6*h1a06$a2*h1a06$S2eqm)/(1+h1a06$aF*h1a06$hF*h1a06$Feqm + h1a06$a2*h1a06$h2*h1a06$S2eqm) )
 h1a06$thetas=h1a06$thetaF+h1a06$thetaS2
 
-h1a06$percCons=((h1a06$thetaF/.6)+(h1a06$thetaS2/.6))/(h1a06$S1eqm+h1a06$S2eqm+h1a06$Feqm)
+h1a06$LDratio=((h1a06$thetaF/.6)+(h1a06$thetaS2/.6))/(h1a06$S1eqm+h1a06$S2eqm+h1a06$Feqm)
 
 
 	###########Fig S5###########
@@ -51,7 +48,7 @@ df=subset(h1a06,aF==1&a2==0) %>%
   group_by(rF) %>%
   summarize(avgGam1=mean(gam1,na.rm=TRUE), sdGam1=sd(gam1,na.rm=TRUE),
   avgGam2=mean(gam2,na.rm=TRUE), sdGam2=sd(gam2,na.rm=TRUE),
-  avgPerc=mean(percCons,na.rm=TRUE), sdPerc=sd(percCons,na.rm=TRUE) )
+  avgPerc=mean(LDratio,na.rm=TRUE), sdPerc=sd(LDratio,na.rm=TRUE) )
 
 ggplot() + theme_bw() +
    geom_point(data=df,aes(x=rF,y=avgPerc,color='black')) + 
@@ -62,7 +59,7 @@ ggplot() + theme_bw() +
    geom_errorbar(data=df,aes(x=rF,y=avgGam2,ymin=avgGam2-sdGam2, ymax=avgGam2+sdGam2), width=.05, col='blue') +
    xlab(expression(paste("Seed Prodct. Rate,", r[F]))) + ylab('Ecological Factor at Eqm') +
    theme(legend.position = c(0.18, 0.78)) +
-   scale_color_manual(name=" Function", values=c("black","blue","red"),labels=c(expression(L["ratio"]),expression(gamma[12]),expression(gamma["2F"]) ) ) +
+   scale_color_manual(name=" Function", values=c("black","blue","red"),labels=c(expression(L:D["ratio"]),expression(gamma[12]),expression(gamma["2F"]) ) ) +
    theme(text = element_text(size=15))
 
 	###########Fig S6###########
@@ -98,8 +95,8 @@ ggplot(data=qw,aes(x=gam1+gam2,y=(Feqm/(Feqm+S2eqm+S1eqm)),col=as.factor(StableB
 #######
 ggplot() + theme_bw() +
   xlab(expression(gamma[12]^"*"+gamma["2F"]^"*")) + ylab(bquote(L_Ratio) ) + ylim(0,.5)+
-  #geom_point(data=subset(h1a06,aF==1&a2==0),aes(x=gam1+gam2,y=percCons,col=as.factor(StableB) )) +
-  geom_point(data=subset(h1a06,aF==0.2&a2==1),aes(x=gam1+gam2,y=percCons,col=as.factor(StableB) )) +
+  #geom_point(data=subset(h1a06,aF==1&a2==0),aes(x=gam1+gam2,y=LDratio,col=as.factor(StableB) )) +
+  geom_point(data=subset(h1a06,aF==0.2&a2==1),aes(x=gam1+gam2,y=LDratio,col=as.factor(StableB) )) +
   scale_color_discrete(name="  Stable" ,labels=c("No","Yes") ) +
   #scale_color_continuous(name=expression(" "~r[F]) )+#,labels=c("No","Yes") ) +
   theme(legend.position = c(0.15, 0.78)) 
@@ -117,18 +114,18 @@ ggplot() + theme_bw() +
 ##Create separate data frames for a2==1&aF==0.2 and a2==0&aF==1 subsets
 df_a21aF02=subset(h1a06,a2==1&aF==0.2) %>%
   group_by(rF) %>% 
-  summarize(avgPerc=mean(percCons ),sdPerc=sd(percCons ),avgGams=mean(gam1+gam2 ),sdGams=sd(gam1+gam2 ),
-  avgRat=mean(percCons/(gam1+gam2) ),sdRat=sd(percCons/(gam1+gam2) ) )
+  summarize(avgPerc=mean(LDratio ),sdPerc=sd(LDratio ),avgGams=mean(gam1+gam2 ),sdGams=sd(gam1+gam2 ),
+  avgRat=mean(LDratio/(gam1+gam2) ),sdRat=sd(LDratio/(gam1+gam2) ) )
 
 df_a20aF1=subset(h1a06,a2==0&aF==1) %>%
   group_by(rF) %>% 
-  summarize(avgPerc=mean(percCons ),sdPerc=sd(percCons ),avgGams=mean(gam1+gam2 ),sdGams=sd(gam1+gam2 ),
-  avgRat=mean(percCons/(gam1+gam2) ),sdRat=sd(percCons/(gam1+gam2) ) )
+  summarize(avgPerc=mean(LDratio ),sdPerc=sd(LDratio ),avgGams=mean(gam1+gam2 ),sdGams=sd(gam1+gam2 ),
+  avgRat=mean(LDratio/(gam1+gam2) ),sdRat=sd(LDratio/(gam1+gam2) ) )
 
 df_a202aF1=subset(h1a06,a2==0.2&aF==1) %>%
   group_by(rF) %>% 
-  summarize(avgPerc=mean(percCons ),sdPerc=sd(percCons ),avgGams=mean(gam1+gam2 ),sdGams=sd(gam1+gam2 ),
-  avgRat=mean(percCons/(gam1+gam2) ),sdRat=sd(percCons/(gam1+gam2) ) )
+  summarize(avgPerc=mean(LDratio ),sdPerc=sd(LDratio ),avgGams=mean(gam1+gam2 ),sdGams=sd(gam1+gam2 ),
+  avgRat=mean(LDratio/(gam1+gam2) ),sdRat=sd(LDratio/(gam1+gam2) ) )
 
 df_plot <- bind_rows(df_a21aF02,df_a20aF1, .id = "id")
 df_plot <- bind_rows(df_a21aF02,df_a202aF1,df_a20aF1, .id = "id")
@@ -136,7 +133,7 @@ View(df_plot)
 
 ##Plot each subset on the same plot for comparison
 ggplot(data=df_plot,aes(x=rF,y=avgRat,col=id)) + theme_bw() + ylim(0,1.05)+ xlim(0.3,3.1) +
-  xlab(expression(paste("Seed Prodct. Rate,", r[F]))) + ylab(expression(paste("L_ratio/", gamma[12]^"*"+gamma["2F"]^"*")) ) +
+  xlab(expression(paste("Seed Prodct. Rate,", r[F]))) + ylab(expression(paste("L:D Ratio/", gamma[12]^"*"+gamma["2F"]^"*")) ) +
   geom_point() + theme(axis.text = element_text(size = 18)) +
   theme(axis.title = element_text(size = 18)) +
   geom_errorbar(aes(ymin=avgRat-sdRat, ymax=avgRat+sdRat), width=.2) +
@@ -144,7 +141,7 @@ ggplot(data=df_plot,aes(x=rF,y=avgRat,col=id)) + theme_bw() + ylim(0,1.05)+ xlim
   theme(legend.position = c(0.18, 0.15))
 
 ggplot(data=df_plot,aes(x=rF,y=avgRat,col=id)) + theme_bw() + ylim(0,1.05)+ xlim(0.3,3.1) +
-  xlab(expression(paste("Seed Prodct. Rate,", r[F]))) + ylab(expression(paste("L_ratio/", gamma[12]^"*"+gamma["2F"]^"*")) ) + 
+  xlab(expression(paste("Seed Prodct. Rate,", r[F]))) + ylab(expression(paste("L:D Ratio/", gamma[12]^"*"+gamma["2F"]^"*")) ) + 
   geom_point() + theme(axis.text = element_text(size = 18)) +
   theme(axis.title = element_text(size = 18)) +
   geom_errorbar(aes(ymin=avgRat-sdRat, ymax=avgRat+sdRat), width=.2) +
@@ -206,11 +203,8 @@ ggplot(plotdata, aes(x0, fit)) + theme_bw() + theme(text = element_text(size=14)
 ##Use simDataLoader to load the hf1h205a06 herbivory subset. 
 ##We have copied that code here for the convenience of the user:
 
-#loading the data, it needs to be in one folder with nothing else in it
-setwd("~/path to where you saved the folder/XXX")
-file.list <- list.files(pattern='*.csv')
-df.list <- lapply(file.list, read_csv)
-hf1h205a06 <- bind_rows(df.list, .id = "id")
+#load the corresponding csv file
+hf1h205a06 <- read.csv("~/path to where you saved the file/FiveParamSweep-alp0.06-hF1-h20.5.csv",sep=",",header=T, na.strings=c("NaN","#NAME?","-Inf",""))
 ##need to run these too
 hf1h205a06$rF=round(hf1h205a06$rF,1)
 hf1h205a06$g1=round(hf1h205a06$g1,2)
@@ -220,7 +214,7 @@ hf1h205a06$aF=round(hf1h205a06$aF,1)
 
 #The following equations form the output from our model's subfunctions
 #delta, gamma12(gam1), gamma2F(gam2), thetaF and thetaS2 in order to 
-#make percCons
+#make LDratio
 hf1h205a06$delta=hf1h205a06$Feqm*(hf1h205a06$rF - hf1h205a06$alpF*hf1h205a06$Feqm)
 hf1h205a06$gam1=( hf1h205a06$g1*hf1h205a06$S1eqm/(1 + hf1h205a06$alp1*(hf1h205a06$Feqm + .2*(hf1h205a06$S1eqm + hf1h205a06$S2eqm))) )
 hf1h205a06$gam2=( hf1h205a06$g2*hf1h205a06$S2eqm/(1 + hf1h205a06$alp2*(hf1h205a06$Feqm + .2*(hf1h205a06$S2eqm))) )
@@ -229,7 +223,7 @@ hf1h205a06$thetaF= ((hf1h205a06$Heqm*.6*hf1h205a06$aF*hf1h205a06$Feqm)/(1+hf1h20
 hf1h205a06$thetaS2= ((hf1h205a06$Heqm*.6*hf1h205a06$a2*hf1h205a06$S2eqm)/(1+hf1h205a06$aF*hf1h205a06$hF*hf1h205a06$Feqm + hf1h205a06$a2*hf1h205a06$h2*hf1h205a06$S2eqm) )
 hf1h205a06$thetas=hf1h205a06$thetaF+hf1h205a06$thetaS2
 
-hf1h205a06$percCons=((hf1h205a06$thetaF/.6)+(hf1h205a06$thetaS2/.6))/(hf1h205a06$S1eqm+hf1h205a06$S2eqm+hf1h205a06$Feqm)
+hf1h205a06$LDratio=((hf1h205a06$thetaF/.6)+(hf1h205a06$thetaS2/.6))/(hf1h205a06$S1eqm+hf1h205a06$S2eqm+hf1h205a06$Feqm)
 
 
 ##Set up data storing matrices
@@ -241,17 +235,17 @@ percCM=matrix(0,length(As),length(As)); gam1M=matrix(0,length(As),length(As)); g
 for(i in 1:length(As) ) {
 	for(j in 1:length(As) ) {
 		temp=subset(hf1h205a06,aF==As[i]&a2==As[j])
-		temp=data.frame(temp$StableB,temp$MaxEVal,temp$rF,temp$g1,temp$g2,temp$percCons,temp$gam1,temp$gam2);
-		colnames(temp)=c('Stable','EV','rF','g1','g2','percCons','gam1','gam2'); temp$Stable=as.factor(temp$Stable);
+		temp=data.frame(temp$StableB,temp$MaxEVal,temp$rF,temp$g1,temp$g2,temp$LDratio,temp$gam1,temp$gam2);
+		colnames(temp)=c('Stable','EV','rF','g1','g2','LDratio','gam1','gam2'); temp$Stable=as.factor(temp$Stable);
 		
-		tempPLSmod=plsr(EV~percCons+gam1+gam2,data=temp)
+		tempPLSmod=plsr(EV~LDratio+gam1+gam2,data=temp)
 		coefficients=coef(tempPLSmod)
 		sum.coef = sum(sapply(coefficients, abs))
 		coefficients = coefficients * 100 / sum.coef
 		coefficients = sort(coefficients[, 1 , 1])
 		#barplot(tail(coefficients, 5))
 
-		percCM[i,j]=coefficients[['percCons']]
+		percCM[i,j]=coefficients[['LDratio']]
 		gam1M[i,j]=coefficients[['gam1']]
 		gam2M[i,j]=coefficients[['gam2']]
 	}
