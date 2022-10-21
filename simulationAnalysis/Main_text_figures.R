@@ -229,3 +229,44 @@ ggplot(compCoeff, aes(as.factor(a2), as.factor(aF), fill= gam2coeff)) +
   geom_tile() + theme_bw() + coord_fixed() +
   ylab(bquote('Attack Rate on S2 '~(a[2])~'') ) +
   xlab(bquote('Attack Rate on F '~(a[F])~'') )
+
+
+# Figure 4: Partial least squares -----------------------------------------
+
+matrix = matrix(NA,12,3)
+colnames(matrix)=c('consumption','variable','coefficient')
+counter = 1;
+consumption = c("seedling-only","adult-only","seedling-dominant","adult-dominant")
+aFs=c(0,1,0.2,1);
+a2s=c(1,0,1,0.2);
+
+for (i in c(1,2,3,4)) {
+  plsmod=plsr(MaxEVal~percCons+gam1+gam2,data=subset(h1a06,aF==aFs[i]&a2==a2s[i]))
+  ##Extract coefficients
+  coefficients=coef(plsmod)
+  ##Normalizing them
+  sum.coef = sum(sapply(coefficients, abs))
+  coefficients = coefficients * 100 / sum.coef
+  coefficients = sort(coefficients[, 1 , 1])
+  col1 = consumption[i]
+  matrix[counter,]=c(col1,"gam1",coefficients[c(2)])
+  counter=counter+1;
+  matrix[counter,]=c(col1,"gam2",coefficients[c(1)])
+  counter=counter+1;
+  matrix[counter,]=c(col1,"percCons",coefficients[c(3)])
+  counter=counter+1;
+}
+
+matrix=as.data.frame(matrix)
+matrix$coefficient=as.numeric(matrix$coefficient)
+matrix$coefficient=round(matrix$coefficient,2)
+
+##This creates the two parameter bargraphs
+ggplot(matrix, aes(x=factor(variable), y=coefficient,fill=factor(consumption))) + #ylim(-.007,.011)  +
+  geom_bar(stat="identity", width=0.8,
+           position=position_dodge(0.8)) +
+  theme_bw() + theme(text = element_text(size=20)) +
+  labs(x = "Coefficients by Variable", y = "Coefficients", fill="Variables") +
+  theme(legend.direction = "horizontal") +
+  theme(legend.text = element_text(colour="black", size = 11)) + 
+  theme(legend.position="bottom")
