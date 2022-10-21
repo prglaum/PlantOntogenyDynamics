@@ -1,0 +1,195 @@
+---
+title: "Compadre Analysis"
+author: "Paul Glaum as part of Simon et al 2022"
+date: '2022-04-08'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Compadre plant matrix repository
+
+COMPADRE is a global online repository for matrix population models (MPMs) and metadata on plants Please see <https://jonesor.github.io/Rcompadre/index.html> & <https://jonesor.github.io/CompadreGuides/user-guide.html> for in-depth discussion of COMPADRE install and usage.
+
+## Install the stable release package from CRAN. Also load ggplot:
+
+```{r packages, message=FALSE}
+
+#install.packages("Rcompadre")
+##Remote install from github with:
+#remotes::install_github("jonesor/Rcompadre", build_vignettes = FALSE)
+##
+library(Rcompadre)
+require(ggplot2)
+require(gridExtra)
+library(kableExtra)
+library(leaflet)
+```
+
+## Get up to date version of COMPADRE
+
+```{r fetchCompadre}
+compadre <- cdb_fetch("compadre")
+```
+
+### Stage No. distribution
+Check the current distribution of different matrix structures in COMPADRE. We only show models made up of 10 stages or less:
+```{r matDim, echo=FALSE}
+table(compadre$MatrixDimension)[1:10]
+```
+
+## Check the breakdown of 3-stage plant models.
+### Species
+Check number of taxonomic species currently represented by 3-stage plant models:
+```{r checkSpecies, echo=FALSE}
+##Creating full species name column###
+compadre$fullSpName=paste(compadre$Genus,compadre$Species,sep=" ")
+length(unique(compadre$fullSpName[compadre$MatrixDimension==3]))
+#107
+```
+### Genera
+Check distribution of taxonomic genera currently represented by 3-stage plant models:
+<div align="center">
+```{r genera, results="asis", echo=FALSE}
+#print("Check number of taxonomic genera currently represented by 3-stage plant models:")
+GeneraNum=length(unique(compadre$Genus[compadre$MatrixDimension==3]));
+#print("Breakdown across genera:")
+knitr::kable(table(compadre$Genus[compadre$MatrixDimension==3]),
+             col.names = c("Plant Genus","Freq in Database"),
+             caption = paste("Breakdown across the",GeneraNum, "plant genera") )  %>% 
+  kable_styling("striped", full_width = F) %>% 
+ scroll_box(width = "500px", height = "500px")
+``` 
+</div>
+
+### Families
+Check distribution of taxonomic families currently represented by 3-stage plant models:
+<div align="center">
+```{r families, results="asis", echo=FALSE}
+#print("Check number of taxonomic families currently represented by 3-stage plant models:")
+FamiliesNum=length(unique(compadre$Family[compadre$MatrixDimension==3]))
+#print("Breakdown across families:")
+knitr::kable(table(compadre$Family[compadre$MatrixDimension==3]),
+             col.names = c("Plant Family","Freq in Database"),
+             caption = paste("Breakdown across the",FamiliesNum, "plant families") ) %>% 
+  kable_styling("striped", full_width = F) %>% 
+ scroll_box(width = "500px", height = "500px")
+```
+</div>
+
+### Geographic distribution:
+Check COMPADRE website above to see Eco-region abbreviations.
+
+```{r geo, message=FALSE, echo=FALSE}
+t1=knitr::kable(
+  table(compadre$Continent[compadre$MatrixDimension==3]),
+             col.names = c("Continent","Freq in Database"),
+             caption = paste("Breakdown across continents"));
+t2=knitr::kable( 
+  table(compadre$Ecoregion[compadre$MatrixDimension==3]),
+             col.names = c("Eco-Region","Freq in Database"),
+             caption = paste("Breakdown across Regions") );
+
+t1 %>%
+  kable_styling(full_width = FALSE, position = "float_left")
+t2 %>%
+  kable_styling(full_width = FALSE, position = "left")
+
+
+```
+
+#### Map
+```{r maps, message=FALSE}
+##Create a subset of only 3-stage matrices
+mat3=subset(compadre, MatrixDimension==3);
+LLdf=data.frame(mat3$Lat,mat3$Lon,mat3$fullSpName);
+colnames(LLdf)=c("lat","long","Species");
+LLdf<- LLdf[complete.cases(LLdf), ];
+LLdf<-LLdf[!duplicated(LLdf), ];
+
+suppressWarnings(
+  LLdf %>%
+  leaflet( width = 900) %>%
+  addTiles() %>%
+  addMarkers(clusterOptions = markerClusterOptions(), popup = ~paste0(
+      "<b><h4>","Species", "</h4></b><br>",LLdf$Species)  )
+)
+
+```
+
+## Prepare demographic rates
+
+Pull specific demographic rate data from the 3-stage models. Note, if you are running these script, this must be run before making figures below.
+
+```{r, rates, message=FALSE}
+##Create a subset of only 3-stage matrices
+mat3=subset(compadre, MatrixDimension==3);
+##COMPADRE uses "accessor functions" to obtain specific parts of the matrices.
+##matF accesses the fecundity part of the matrix, akin to our rF
+Fmats=matF(mat3);
+##matU accesses the survival-related transitions, akin to our g12 and g2F
+Umats=matU(mat3);
+
+#To store entry. Fs for reproduction alone, F.U for reproduction & transitions. 
+Fs=rep(); F.U=matrix(0,length(Fmats),4)
+for(i in 1:length(Fmats) ) {
+	Fs[i]=sum(Fmats[i][[1]][1,3] )
+	F.U[i,1:3]=Umats[i][[1]][lower.tri(Umats[i][[1]])] ##only take the transitions
+	F.U[i,4]=Fs[i] #include reproduction
+}
+#make easy to use data frame for our curated data. 
+#name columns in the vein of our parameters. Note, d31 named for the 
+#addition into stage 1 from stage 3 is the same as our rF
+UnF=as.data.frame(F.U)
+colnames(UnF)=c('g12','g13','g23','d31')
+UnF=subset(UnF,UnF$d31>0&UnF$d31<100)
+```
+
+## Make plots
+
+Scatter plots showing correlations between parameters:
+
+```{r fig1, fig.height = 3, fig.width = 10, fig.align = "center", message=FALSE}
+g12vrF=ggplot(UnF) + theme_bw() +
+ geom_point(aes(x=g12,y=log(d31)),alpha=.4,size=2) +
+ xlab(bquote('maturation rate'~(g['12'])) )+
+ ylab(bquote('log(reproduction rate)'~(r[F])) )
+
+g23vrF=ggplot(UnF) + theme_bw() +
+ geom_point(aes(x=g23,y=log(d31)),alpha=.4,size=2) +
+ xlab(bquote('maturation rate'~(g['2F'])) )+
+ ylab(bquote('log(reproduction rate)'~(r[F])) )
+
+g23vg12=ggplot(UnF) + theme_bw() +
+ geom_point(aes(x=g23,y=g12),alpha=.4,size=2) +
+ xlab(bquote('maturation rate'~(g['2F'])) )+
+ ylab(bquote('germination rate'~(g['12'])) )
+
+suppressWarnings(grid.arrange(g12vrF, g23vrF, g23vg12, ncol=3) )
+```
+
+Histograms of the value distribution for each parameter:
+
+```{r fig2, fig.height = 3, fig.width = 10, fig.align = "center"}
+Fss=Fs[Fs<100&Fs>0]
+
+h1<-suppressWarnings(hist(na.omit(Fss),breaks=80,col='light blue',xlim=c(0,10.6),plot=FALSE));
+h1$density = suppressWarnings(h1$counts/sum(h1$counts));
+h2<-suppressWarnings(hist(na.omit(UnF$g12[UnF$g12>0]),breaks=40,col='light blue',plot=FALSE));
+h2$density = suppressWarnings(h2$counts/sum(h2$counts));
+h3<-suppressWarnings(hist(na.omit(UnF$g23[UnF$g23>0]),breaks=40,col='light blue',plot=FALSE));
+h3$density = suppressWarnings(h3$counts/sum(h3$counts))
+
+par( mfrow= c(1,3) )
+plot(h1,freq=FALSE,col='light blue',xlim=c(0,10.6),
+xlab="Measured Rate",ylab="Density",main="Reproduction into 1st Stage")#,ylim=c(0,.5))
+
+plot(h2,freq=FALSE,col='light blue',
+xlab="Measured Rate",ylab="Density",main="1st to 2nd Stage Transition")#,ylim=c(0,.5))
+
+plot(h3,freq=FALSE,col='light blue',
+xlab="Measured Rate",ylab="Density",main="2nd to 3rd Stage Transition")#,ylim=c(0,.5))
+
+```
