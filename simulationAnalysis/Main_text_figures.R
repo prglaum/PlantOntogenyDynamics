@@ -92,12 +92,11 @@ matrix$coefficient=as.numeric(matrix$coefficient)
 matrix$coefficient=round(matrix$coefficient,2)
 
 ##This creates the two parameter bargraphs
-ggplot(matrix, aes(x=factor(consumption), y=coefficient,fill=factor(variable))) + #ylim(-.007,.011)  +
+ggplot(matrix, aes(x=factor(variable), y=coefficient,fill=factor(consumption))) + #ylim(-.007,.011)  +
   geom_bar(stat="identity", width=0.8,
            position=position_dodge(0.8)) +
-  theme_bw() + theme(text = element_text(size=20))+
-  labs(x = "Coefficients by consumption", y = "Coefficients", fill="Parameters") +
-  scale_fill_manual(labels = expression(gamma[1],gamma[2],PercCons), values = c("#F8766D", "#00BA38","#619CFF")) +
+  theme_bw() + theme(text = element_text(size=20)) +
+  labs(x = "Coefficients by Variable", y = "Coefficients", fill="Variables") +
   theme(legend.direction = "horizontal") +
   theme(legend.text = element_text(colour="black", size = 11)) + 
   theme(legend.position="bottom")
