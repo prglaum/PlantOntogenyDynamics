@@ -125,7 +125,7 @@ for (r in 1:length(rFs) ) {
 }
 
 #Create the color palette for the graph
-rbPal <- colorRampPalette(c("blue", "orange", "red"))#, in this case, red is the higher value...I feel confused?
+rbPal <- colorRampPalette(c("blue", "orange", "red"))
 colors <- rbPal(14)[as.numeric(cut(unique(seq(.6,4.0,.2)),breaks = 14))]
 
 #Producing the multi-line graph
